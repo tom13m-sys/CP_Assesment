@@ -1,0 +1,12 @@
+iot/Measurement.class
+iot/AnomalyDetectionJob$AnomalyWindowFunction.class
+iot/AnomalyDetectionJob.class
+org/apache/flink/TemperatureAnomalyDetection$FullAnomalyWindowFunction.class
+org/apache/flink/TemperatureAnomalyDetection$TemperatureReading.class
+iot/AnomalyDetectionJob$LocalQueueSource.class
+iot/AnomalyDetectionJob$DedupFunction.class
+org/apache/flink/TemperatureAnomalyDetection$IoTTemperatureSource.class
+iot/MeasurementApi.class
+iot/TestDataGenerator.class
+iot/TestDataGenerator$CustomerSimulator.class
+org/apache/flink/TemperatureAnomalyDetection.class

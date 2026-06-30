@@ -1,0 +1,5 @@
+{
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.debug.settings.hotCodeReplace": "manual",
+    "java.compile.nullAnalysis.mode": "disabled"
+}
