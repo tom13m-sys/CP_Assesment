@@ -72,8 +72,8 @@ even though it added complexity early.
   support replay independent of Kafka retention. Omitted locally as out of scope
   for a runnable demo.
 
-- **No error handling or metrics/alerting design.** Explicitly tabled earlier in
-  the discussion as a separate topic, not yet addressed.
+- **No error handling or metrics/alerting design.** Addressed only as a design
+  spec without implementation due to time constraint.
 
 - **No idempotent/transactional sink.** Anomalies are printed to stdout. We
   named this early as a structural ceiling — exactly-once end-to-end is not

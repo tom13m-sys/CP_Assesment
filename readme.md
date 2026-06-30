@@ -1,11 +1,22 @@
 
 ## How to run:
 
-**Compile**: mvn clean package
+**Clone & Compile**: 
+
+git clone https://github.com/tom13m-sys/Checkpoint_assesment.git
+cd Checkpoint_assesment
+
+//Compile
+`mvn clean package`
+
 
 **Step1**:
 Run the RestAPI + Main ETL jar
 `java -jar target/iot-anomaly-detection-1.0-SNAPSHOT.jar`
+
+Wait for the console to show:
+REST API listening on port 8080
+=== ETL started. POST to http://localhost:8080/measurements ===
 
 **Step2**:
 Run the test data generator
