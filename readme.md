@@ -21,8 +21,10 @@ java -jar target/iot-anomaly-detection-1.0-SNAPSHOT.jar
 ```
 
 Wait for the console to show:
-REST API listening on port 8080
-=== ETL started. POST to http://localhost:8080/measurements ===
+
+`REST API listening on port 8080`
+
+`=== ETL started. POST to http://localhost:8080/measurements ===`
 
 **Step2**:
 Run the test data generator
