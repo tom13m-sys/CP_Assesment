@@ -3,16 +3,22 @@
 
 **Clone & Compile**: 
 
-```git clone https://github.com/tom13m-sys/Checkpoint_assesment.git
-cd Checkpoint_assesment```
+```
+git clone https://github.com/tom13m-sys/Checkpoint_assesment.git
+cd Checkpoint_assesment
+```
 
 Compile
-```mvn clean package```
+```
+mvn clean package
+```
 
 
 **Step1**:
 Run the RestAPI + Main ETL jar
-```java -jar target/iot-anomaly-detection-1.0-SNAPSHOT.jar```
+```
+java -jar target/iot-anomaly-detection-1.0-SNAPSHOT.jar
+```
 
 Wait for the console to show:
 REST API listening on port 8080
@@ -25,10 +31,14 @@ The data generator will send a batch of 100 normal value readings every 5 second
 One anomaly per customer is sent every 60 seconds
 
 Generate data for single customer
-```java -cp target/iot-anomaly-detection-1.0-SNAPSHOT.jar iot.test.TestDataGenerator```
+```
+java -cp target/iot-anomaly-detection-1.0-SNAPSHOT.jar iot.test.TestDataGenerator
+```
 
 Generate data for 5 customers
-```java -cp target/iot-anomaly-detection-1.0-SNAPSHOT.jar iot.test.TestDataGenerator 5```
+```
+java -cp target/iot-anomaly-detection-1.0-SNAPSHOT.jar iot.test.TestDataGenerator 5
+```
 
 
 
