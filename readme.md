@@ -10,11 +10,14 @@ Run the RestAPI + Main ETL jar
 **Step2**:
 Run the test data generator
 
+The data generator will send a batch of 100 normal value readings every 5 seconds
+One anomaly per customer is sent every 60 seconds
+
 Generate data for single customer
-`java -cp target/iot-anomaly-detection-1.0-SNAPSHOT.jar iot.TestDataGenerator`
+`java -cp target/iot-anomaly-detection-1.0-SNAPSHOT.jar iot.test.TestDataGenerator`
 
 Generate data for 5 customers
-`java -cp target/iot-anomaly-detection-1.0-SNAPSHOT.jar iot.TestDataGenerator 5`
+`java -cp target/iot-anomaly-detection-1.0-SNAPSHOT.jar iot.test.TestDataGenerator 5`
 
 
 
@@ -35,7 +38,7 @@ Generate data for 5 customers
 8. **Kafka publish**:
    - **Key**: `DeviceID@CustomerID`
    - **Value**: `{UUID, TS, APIIngestTS, reading}`
-   - **Topic**: tier-selected (`measurements-heavy/medium/light`)
+   - **Topic**: tier-selected (`measurements-heavy/medium/light`) - number of partitions should be pre-determined with max value for future growth outlook.
 
 ## Main ETL — design spec (per tier, 3 identical jobs)
 
@@ -69,5 +72,30 @@ Anomalies published to an output Kafka topic, keyed for idempotent downstream co
 
 
 
+## Monitoring and System health
 
+Establish a base line for normal and expect behaviour and provide health indicators when crossing a threshold per metric.
+* Advance monitoring will be done per ETL tier
 
+**Overall system health**
+End-to-end latency (time from apiIngestTs to anomaly emitted), total throughput vs. expected baseline, job uptime/restart count.
+
+**Per-module health**
+Per module SLA, REST API request rate/error rate per tenant tier, Kafka consumer lag per tier-topic, checkpoint success rate and duration, dedup state size growth (a proxy for whether TTL is sized correctly), DLQ message rate (a spike means something upstream changed shape).
+
+**Data health**
+Rejected-at-API rate (validation failures, segmented by tenant — a single tenant suddenly sending 90% garbage is itself a signal, possibly a misconfigured device fleet), dedup hit rate (an unexpectedly high duplicate rate suggests an infra issue, e.g. a consumer rebalance storm), late-data/dropped-record rate from the window operator, anomaly rate per tier (a sudden systemic spike across many devices is more likely a pipeline bug — e.g. dedup or windowing broken — than 200,000 sensors failing simultaneously, and is worth distinguishing from genuine anomaly bursts).
+
+## Failure and alerting
+
+**REST API**
+- Ongoing exceeding call rejected rate (differ between newly onboarded customers (Warning?) and old customers (Page someone))
+- Invalid/Blocked calls need to logged (For investigation) and monitored as a frequent report or on-demand
+
+**Main ETL**
+- Write invalid/Corrupted events to DLQ - monitored, on highier should be paged
+- Increase in dedup count - monitored, on highier rates should be paged
+- Consumer lag increase (For example one customer is heavy sending) detection
+- Checkpoint failure rate or duration increase may indicate a serious issue is beginning - Should be paged
+
+- Overall error count - monitored

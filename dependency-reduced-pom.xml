@@ -18,7 +18,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>iot.AnomalyDetectionJob</mainClass>
+                  <mainClass>iot.etl.AnomalyDetectionJob</mainClass>
                 </transformer>
                 <transformer />
               </transformers>

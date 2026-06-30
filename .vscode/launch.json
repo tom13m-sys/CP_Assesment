@@ -8,7 +8,7 @@
             "type": "java",
             "name": "TestDataGenerator",
             "request": "launch",
-            "mainClass": "iot.TestDataGenerator",
+            "mainClass": "iot.test.TestDataGenerator",
             "projectName": "demo_cp1"
         },
         {
@@ -21,14 +21,7 @@
             "type": "java",
             "name": "AnomalyDetectionJob",
             "request": "launch",
-            "mainClass": "iot.AnomalyDetectionJob",
-            "projectName": "demo_cp1"
-        },
-        {
-            "type": "java",
-            "name": "TemperatureAnomalyDetection",
-            "request": "launch",
-            "mainClass": "iot.TemperatureAnomalyDetection",
+            "mainClass": "iot.etl.AnomalyDetectionJob",
             "projectName": "demo_cp1"
         }
     ]

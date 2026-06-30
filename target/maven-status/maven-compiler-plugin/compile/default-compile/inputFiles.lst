@@ -1,5 +1,4 @@
-/home/tomermenahem/Java/cp_flink_test1/demo_cp1/src/main/java/org/apache/flink/TemperatureAnomalyDetection.java
-/home/tomermenahem/Java/cp_flink_test1/demo_cp1/src/main/java/iot/Measurement.java
-/home/tomermenahem/Java/cp_flink_test1/demo_cp1/src/main/java/iot/AnomalyDetectionJob.java
-/home/tomermenahem/Java/cp_flink_test1/demo_cp1/src/main/java/iot/TestDataGenerator.java
-/home/tomermenahem/Java/cp_flink_test1/demo_cp1/src/main/java/iot/MeasurementApi.java
+/home/tomermenahem/Java/cp_flink_test1/demo_cp1/src/main/java/iot/data/Measurement.java
+/home/tomermenahem/Java/cp_flink_test1/demo_cp1/src/main/java/iot/gateway/MeasurementApi.java
+/home/tomermenahem/Java/cp_flink_test1/demo_cp1/src/main/java/iot/test/TestDataGenerator.java
+/home/tomermenahem/Java/cp_flink_test1/demo_cp1/src/main/java/iot/etl/AnomalyDetectionJob.java
