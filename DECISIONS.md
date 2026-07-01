@@ -92,11 +92,7 @@ even though it added complexity early.
 ## 4. What I'd do next, with another week (For local demo purposes only)
 
 
-1. **Add support for generic devices** - Currently the ETL only supports a concrete temperature
-   device. The ETL needs to be able to accept data and metadata info from
-   a wider range of device types.
-
-2. **Add better data filteration**
+1. **Add better data filteration and small bug fixes**
    Currently the REST API performs a filter out of invalid data such as out 
    of range readings, empty, null readings.
    Add REST API coarse filter (For exmaple payload smaller than 10 chars or 
@@ -105,20 +101,26 @@ even though it added complexity early.
    in the main ETL.
    (The data filteration needs to be added before the dedup step)
 
+2. **Add support for generic devices** - Currently the ETL only supports a concrete temperature
+   device. The ETL needs to be able to accept data and metadata info from
+   a wider range of device types.
+
 3. **Add Backpressure handling**
-3. **Add improved REST API call governance** - Introduce a black list management where corrupted or garbaged devices should
+
+4. **Add improved REST API call governance** - Introduce a black list management where corrupted or garbaged devices should
    be ignored (automatic by thresholds or adhoc management)
 
-4. **Validate the dedup TTL and event-time bounds (5s out-of-orderness, 10s
-   grace) against real device/network behavior** rather than the placeholder
-   values used for local testing — these were chosen for fast local iteration,
-   not based on real-world latency data.
+5. **Introduce cost effective fixes/enhancements**
+   - ETL-side rate limiting / load shedding - Helps cope with peak traffic. Overflow goes to a side location.
+   - Fix the startup anomaly detected bug - Calculate the buffered statistics when a minimal threshold is crossed.
+   - Fix the windown idleness bug
 
-5. **Design and implement an idempotent sink** for anomalies (e.g., a Kafka
-   producer with a deterministic key, or an upsert-based store), closing the
-   exactly-once gap that stdout currently leaves open.
+6. **Add the error-handling and alerting design** I explicitly
+   deferred — dead-letter handling for malformed/unparseable messages,
+   consumer lag monitoring, checkpoint failure alerting, and the operational
+   health signals an on-call engineer would need.
 
-6. **Build out the 3-tier deployment** for real — same job code, three configs,
+7. **BONUS (If time permits) - Build out the 3-tier deployment** for real — same job code, three configs,
    three topics — and add the tenant→tier lookup against an external catalog
    (assumed to exist, per earlier scope decision) instead of a hardcoded
    single-tier pipeline.
@@ -128,14 +130,3 @@ even though it added complexity early.
       system. The customers will automatically be shifted (depending on their thoughput)
       across different tiers and the number of tiers should be increased or reduced
       depending on the overall activity.
-
-7. **Revisit the REST API's resilience controls** (per-tenant rate limiting,
-   circuit breaking) and durable persistence for replay, both named in the
-   design but not built, since they're necessary for the tenant isolation
-   requirement to hold end-to-end rather than just at the ETL layer.
-
-
-8. **Add the error-handling and alerting design** I explicitly
-   deferred — dead-letter handling for malformed/unparseable messages,
-   consumer lag monitoring, checkpoint failure alerting, and the operational
-   health signals an on-call engineer would need.

@@ -12,6 +12,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
@@ -50,60 +51,6 @@ public class AnomalyDetectionJob {
 
     private static final double THRESHOLD_SIGMA = 3.0;
     private static final Duration DEDUP_TTL = Duration.ofMinutes(10);
-
-    /**
-     * Builds and returns the job's main pipeline (source -> dedup -> window -> anomalies).
-     * Kept separate from main() so it can be reused by a real Kafka source later without
-     * touching the rest of the topology.
-     */
-    public static DataStream<String> buildPipeline(StreamExecutionEnvironment env,
-                                                     SourceFunction<Measurement> source) {
-
-        DataStream<Measurement> measurements = env
-                .addSource(source)
-                .name("Measurement-Source")
-                .assignTimestampsAndWatermarks(
-                        WatermarkStrategy.<Measurement>forBoundedOutOfOrderness(Duration.ofSeconds(5))
-                                .withTimestampAssigner(
-                                        (SerializableTimestampAssigner<Measurement>)
-                                        // (m, recordTs) -> m.apiIngestTs));
-                                                (m, recordTs) -> m.apiIngestTs).withIdleness(Duration.ofSeconds(15)));
-
-        DataStream<Measurement> deduped = measurements
-                .keyBy(Measurement::deviceKey)
-                .process(new DedupFunction())
-                .name("Dedup");
-
-        return deduped
-                .keyBy(Measurement::deviceKey)
-                .window(TumblingEventTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(1)))
-                .allowedLateness(org.apache.flink.streaming.api.windowing.time.Time.seconds(10))
-                .process(new AnomalyWindowFunction())
-                .name("Anomaly-Detector");
-    }
-
-    // private static BlockingQueue<Measurement> queue;
-    public static void main(String[] args) throws Exception {
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(1); // single-threaded for easy local review of output ordering
-        env.enableCheckpointing(10_000); // exactly-once by default
-
-
-        // DataStream<String> anomalies = buildPipeline(env, new LocalQueueSource(queue));
-        DataStream<String> anomalies = buildPipeline(env, new LocalQueueSource());
-        anomalies.print().name("Anomaly-Sink");
-
-        // Local stand-in for the per-tier Kafka topic: a shared in-memory queue,
-        // fed directly by the REST API in this same process.
-        // AnomalyDetectionJob.queue = new LinkedBlockingQueue<>();
-        // MeasurementApi api = new MeasurementApi(queue);
-        MeasurementApi api = new MeasurementApi(LocalQueueSource.QUEUE);
-        api.start(8080);
-
-
-        System.out.println("=== ETL started. POST to http://localhost:8080/measurements ===");
-        env.execute("IoT Temperature Anomaly Detection");
-    }
 
     // -------------------------------------------------------------------------
     // Local source: reads from the in-memory queue the REST API publishes to.
@@ -151,7 +98,7 @@ public class AnomalyDetectionJob {
         public void open(org.apache.flink.configuration.Configuration parameters) {
             StateTtlConfig ttlConfig = StateTtlConfig
                     .newBuilder(Time.minutes(DEDUP_TTL.toMinutes()))
-                    .setUpdateType(StateTtlConfig.UpdateType.OnCreateAndWrite)
+                    .setUpdateType(StateTtlConfig.UpdateType.OnCreateAndWrite) // OnReadAndWrite would reset the TTL time for every contains check
                     .build();
 
             MapStateDescriptor<String, Boolean> uuidDesc =
@@ -215,4 +162,63 @@ public class AnomalyDetectionJob {
             }
         }
     }
+
+    /**
+     * Builds and returns the job's main pipeline (source -> dedup -> window -> anomalies).
+     * Kept separate from main() so it can be reused by a real Kafka source later without
+     * touching the rest of the topology.
+     */
+    public static DataStream<String> buildPipeline(StreamExecutionEnvironment env,
+                                                     SourceFunction<Measurement> source) {
+
+        DataStream<Measurement> measurements = env
+                .addSource(source)
+                .name("Measurement-Source")
+                .assignTimestampsAndWatermarks(
+                    // forMonotonousTimestamps - for ordered arrivals, out of order events are dropped - lowest latency
+                    // forBoundedOutOfOrderness - events can arrive out of order, but the disorder is bounded
+                    // forGeneratePunctuatedWatermarks - custom logic for watermarks
+                        WatermarkStrategy.<Measurement>forBoundedOutOfOrderness(Duration.ofSeconds(5)) // allow 5 seconds for out of order messages (Network or API issues)
+                                .withTimestampAssigner(
+                                        (SerializableTimestampAssigner<Measurement>)
+                                            (m, recordTs) -> m.apiIngestTs).withIdleness(Duration.ofSeconds(15))); // after 15 seconds of no activity the window should be closed and processed
+
+        DataStream<Measurement> deduped = measurements
+                .keyBy(Measurement::deviceKey)
+                .process(new DedupFunction())
+                .name("Dedup");
+
+        return deduped
+                .keyBy(Measurement::deviceKey)
+                .window(TumblingEventTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(1)))
+                // .window(SlidingEventTimeWindows.of(
+                //     org.apache.flink.streaming.api.windowing.time.Time.minutes(1),
+                //     org.apache.flink.streaming.api.windowing.time.Time.seconds(30)))
+                .allowedLateness(org.apache.flink.streaming.api.windowing.time.Time.seconds(10)) // Allow 10 seconds for late arriving events to be included in the window
+                .process(new AnomalyWindowFunction())
+                .name("Anomaly-Detector");
+    }
+
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1); // single-threaded for easy local review of output ordering
+        env.enableCheckpointing(10_000); // exactly-once by default
+
+
+        // DataStream<String> anomalies = buildPipeline(env, new LocalQueueSource(queue));
+        DataStream<String> anomalies = buildPipeline(env, new LocalQueueSource());
+        anomalies.print().name("Anomaly-Sink");
+
+        // Local stand-in for the per-tier Kafka topic: a shared in-memory queue,
+        // fed directly by the REST API in this same process.
+        // AnomalyDetectionJob.queue = new LinkedBlockingQueue<>();
+        // MeasurementApi api = new MeasurementApi(queue);
+        MeasurementApi api = new MeasurementApi(LocalQueueSource.QUEUE);
+        api.start(8080);
+
+
+        System.out.println("=== ETL started. POST to http://localhost:8080/measurements ===");
+        env.execute("IoT Temperature Anomaly Detection");
+    }
+
 }
