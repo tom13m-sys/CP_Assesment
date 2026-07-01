@@ -4,8 +4,8 @@
 **Clone & Compile**: 
 
 ```
-git clone https://github.com/tom13m-sys/Checkpoint_assesment.git
-cd Checkpoint_assesment
+git clone https://github.com/tom13m-sys/CP_assesment.git
+cd CP_assesment
 ```
 
 Compile
