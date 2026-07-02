@@ -114,6 +114,7 @@ even though it added complexity early.
    - ETL-side rate limiting / load shedding - Helps cope with peak traffic. Overflow goes to a side location.
    - Fix the startup anomaly detected bug - Calculate the buffered statistics when a minimal threshold is crossed.
    - Fix the windown idleness bug
+   - Change window function to use aggregate function
 
 6. **Add the error-handling and alerting design** I explicitly
    deferred — dead-letter handling for malformed/unparseable messages,
