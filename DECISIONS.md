@@ -62,7 +62,7 @@ even though it added complexity early.
   judged to add complexity without adding learning value to a local demo running
   on one device/customer at a time.
 
-- **No per-tenant rate limiting / circuit breaking in the REST API code.** We
+- **No per-tenant rate limiting / circuit breaking in the REST API code.** I
   discussed this as a requirement for real tenant isolation at the edge, but the
   local API is a minimal example focused on the data shape and validation logic,
   not production resilience controls.
@@ -75,7 +75,7 @@ even though it added complexity early.
 - **No error handling or metrics/alerting design.** Addressed only as a design
   spec without implementation due to time constraint.
 
-- **No idempotent/transactional sink.** Anomalies are printed to stdout. We
+- **No idempotent/transactional sink.** Anomalies are printed to stdout. I
   named this early as a structural ceiling — exactly-once end-to-end is not
   achievable with this sink regardless of upstream correctness — and chose not
   to design a transactional sink (e.g., a Kafka producer with two-phase commit)
